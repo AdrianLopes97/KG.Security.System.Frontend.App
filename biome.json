@@ -52,7 +52,8 @@
         "noEmptyInterface": "off",
         "noAssignInExpressions": "off",
         "noMisleadingCharacterClass": "off",
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noUnknownAtRules": "off"
       },
       "a11y": {
         "noSvgWithoutTitle": "off",
