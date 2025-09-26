@@ -3,11 +3,13 @@ import logo from "@/assets/login-icon.png";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { useAuth } from "@/contexts/auth-context";
 import { login } from "@/services/auth";
 import { parseApiError } from "@/utils/parse-api-error";
 import { useMutation } from "@tanstack/react-query";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useId, useState } from "react";
+import { useNavigate } from "react-router";
 
 export function Login() {
   const emailId = useId();
@@ -17,20 +19,15 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const { login: setAuth } = useAuth();
+  const navigate = useNavigate();
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
       setErrorMessage(null);
-      // Exemplo: armazenar tokens (ajuste para usar secure storage / context)
-      if (data.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
-      }
-      //   if (data.refreshToken) {
-      //     localStorage.setItem("refreshToken", data.refreshToken);
-      //   }
-      // Redirecionar após login (ajuste a rota desejada)
-      window.location.href = "/home";
+      setAuth(data); // persist token via context
+      navigate("/home", { replace: true });
     },
     onError: (error) => {
       setErrorMessage(parseApiError(error, "Credenciais inválidas"));
