@@ -28,7 +28,6 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Garante que sempre rejeitamos com uma instância de Error
     if (error instanceof Error) return Promise.reject(error);
     return Promise.reject(new Error(typeof error === "string" ? error : "Erro desconhecido"));
   }
