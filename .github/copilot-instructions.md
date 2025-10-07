@@ -1,59 +1,51 @@
-# Copilot Instructions for KG Security System Frontend
+## Copilot Instructions – KG Security System Frontend
 
-Purpose: Enable AI coding agents to contribute productively and consistently within this React + TypeScript + Vite application.
+Goal: Give AI agents the minimum, project-specific context to implement features safely and consistently (React + TS + Vite + Tailwind v4 + TanStack Query + Axios + zod).
 
-## Architecture & Core Concepts
-- Tech stack: Vite + React 19 (TSX), TanStack Query v5, Axios, Tailwind CSS v4 (with `@tailwindcss/vite`), class-variance-authority for design tokens, zod for runtime env validation.
-- Directory layout highlights:
-  - `src/env.ts` validates required environment variables (e.g. `VITE_BASE_API_URL`) using zod. Always access env through this module—do not read `import.meta.env` directly elsewhere.
-  - `src/lib/api.ts` central Axios instance. Response interceptor unwraps unified backend envelope `ApiResult<T>`; on success returns `response.data = content`; on error throws `ApiError` (custom error carrying original payload). Avoid duplicating unwrapping logic—re-use this instance.
-  - `src/lib/tanstack-query.ts` exports a singleton `queryClient`; use this for React Query provider & invalidation patterns.
-  - `src/interfaces/api-result.ts` defines the canonical API envelope + type guards + `ApiError` and `unwrapApiResult` helper.
-  - `src/services/*` service-layer wrappers (e.g. `auth.ts`) isolate endpoint paths; keep them thin and typed.
-  - `src/utils/parse-api-error.ts` extracts a user-friendly message from unknown/axios errors. Use in UI error boundaries, mutations, and toast/alert flows.
-  - `src/components/ui/*` design-system primitives using tailwind + cva with semantic `data-slot` attributes for styling consistency.
+### Core Architecture
+- Providers stack (`src/Providers.tsx`): `QueryClientProvider` → `AuthProvider` → `BrowserRouter` (React Router v7 style imports from `react-router`).
+- Auth: `contexts/auth-context.tsx` stores `accessToken` in state + `localStorage` and mirrors it to `window.__ACCESS_TOKEN` so the Axios interceptor always has the latest token before re-render cycles.
+- Routing: `Routes.tsx` wraps route groups with `ProtectedRoute` / `PublicOnlyRoute`. Protected content (e.g. `/home`) also nests inside a layout shell (`components/layout/sidebar-project.tsx`). Add new protected pages inside the `<Route element={<ProtectedRoute/>}>` block and (if using the sidebar chrome) beneath the sidebar layout element.
+- API Layer: Single Axios instance in `lib/api.ts`. Request interceptor attaches `Authorization` if token present. Response interceptor unwraps the unified `{ success, content, message }` envelope (types in `interfaces/api-result.ts`) and throws `ApiError` on failures. Never duplicate unwrap logic.
+- React Query: Singleton `queryClient` (`lib/tanstack-query.ts`). Use stable array keys; invalidate explicitly after mutations.
+- Env handling: Only read env via `env.ts` (zod-validated). Extend `envSchema` when adding variables.
 
-## API & Data Flow Pattern
-1. UI (page/component) triggers a React Query mutation or query.
-2. Service function (e.g. `login(credentials)`) calls `api` from `lib/api.ts` with typed generics `<ExpectedResponse>`.
-3. Axios interceptor unwraps `{ success: true, content }` into raw domain object; errors become thrown `ApiError` (message preserved). Catch errors at UI/mutation boundary and pass to `parseApiError` for messaging.
-4. Tokens or session data (currently `accessToken` only) are manually persisted (see `pages/Login`). Future enhancements: central auth context / secure storage.
+### UI & Styling Patterns
+- Design system primitives live in `components/ui/*` and expose semantic `data-slot` attributes (e.g. `<div data-slot="card-header"/>`). Reuse these rather than re-styling raw HTML elements.
+- Variant patterns: Use `class-variance-authority` (see `button.tsx`) instead of conditional string concatenation scattered across components.
+- Layout / Navigation: Sidebar system (`components/ui/sidebar.tsx`) uses internal state + CSS variables (width constants) and keyboard shortcut `b`. High-level composition example: `components/app-sidebar.tsx` combines sample nav data with `NavProjects` / `NavUser`.
+- shadcn-based approach: Treat existing primitives as canonical (they already wrap Radix + Tailwind). When adding UI:
+	- Prefer composing existing primitives over creating raw `<div>`/`<button>` with new class strings.
+	- If a new variant/state is needed, extend the relevant `cva` config (e.g., `buttonVariants`) instead of branching with inline conditionals.
+	- Only create a brand‑new primitive in `components/ui/` if it will be reused across multiple features; otherwise compose locally in the page/feature layer.
+	- Maintain `data-slot` semantics (match existing naming conventions) to keep themable surface consistent.
 
-## Conventions & Guidelines
-- Imports: Use `@/` alias for anything under `src/` (configured in `tsconfig` + `vite.config.ts`). Prefer grouped logical layers: `@/lib`, `@/services`, `@/components`, `@/pages`.
-- Do not bypass the interceptor by creating ad-hoc Axios instances—extend `api` if customization needed.
-- If backend returns the unified envelope and you need raw metadata, extend response typing instead of removing interceptor.
-- Errors shown to end users should go through `parseApiError(error, fallback)` for localization-friendly messaging.
-- Keep service functions pure & side-effect free (no direct `localStorage`, navigation, or UI logic). Handle those in pages/hooks.
-- When adding React Query usage: always supply a stable key array (`['resource', id]`) and leverage invalidate patterns centrally (e.g. helper constants if growth requires).
-- UI components: Extend existing primitives; follow established pattern `(props) => <div data-slot="..." />` and reuse `cn` (`lib/utils.ts`) + `cva` variant pattern.
-- Tailwind: Favor semantic composition via variants instead of inline duplications; check existing `buttonVariants` & `alertVariants` before adding new tokens.
-- Env vars: Add to `envSchema` with explicit zod validation & defaults; never assume optional presence at runtime.
+### Typical Implementation Flows
+1. New API call: add function to `src/services/<domain>.ts` using `api.get/post<Expected>()`; return the already unwrapped data; keep side-effects out.
+2. New protected page: create `src/pages/NewFeature/index.tsx`, add a `<Route path="/new-feature" element={<NewFeature/>} />` inside the protected + sidebar route branch.
+3. Mutation pattern: `const mutation = useMutation({ mutationFn: serviceFn, onError: (e)=> setErr(parseApiError(e,'Fallback')) });` (mirror `pages/Login`).
+4. Auth state changes: call `useAuth().login(response)` with full `LoginResponse` for token persistence; logout via `useAuth().logout()` to clear storage + in-memory cache.
 
-## Typical Tasks (Examples)
-- New service endpoint: create `src/services/<domain>.ts`, import `api`, export typed async function returning the unwrapped entity; let interceptor shape result.
-- New mutation page: use `useMutation({ mutationFn: serviceFn, onError: (e)=> setErr(parseApiError(e)) })` mirroring `pages/Login`.
-- Adding a component variant: extend the `cva` definition (e.g. `buttonVariants`) rather than branching inside the component body.
+### Conventions
+- Imports: Always prefer `@/` alias; avoid relative `../../../` paths.
+- Errors surfaced to UI must pass through `parseApiError(error, msg)` for consistent messaging.
+- Do NOT create additional Axios instances; extend the existing one if needed (e.g., custom headers) by cloning config per call.
+- Keep services pure (no navigation, no localStorage). Put navigation in pages/hooks.
+- Component structure: small stateless wrappers exposing `data-slot` for theming; extend by wrapping, not editing internals unless adding a truly shared capability.
 
-## Build & Tooling
-- Dev: `pnpm dev` (served on port `VITE_PORT` or default 3000).
-- Build: `pnpm build` runs type build (`tsc -b`) then Vite bundle.
-- Type check only: `pnpm typecheck`.
-- Formatting / lint (Biome): `pnpm biome:format`, `pnpm biome:lint`, `pnpm biome:check` (writes by design; avoid committing unformatted code).
+### Commands
+- Dev server: `pnpm dev` (uses `VITE_PORT` or 3000).
+- Build: `pnpm build` (type check + bundle). Lint/format: `pnpm biome:check` (or `:lint`, `:format`). Type-only check: `pnpm typecheck`.
 
-## Adding Dependencies
-- Use `pnpm add <pkg>`; keep runtime deps vs dev deps clear (`-D`). Ensure type packages only when not bundled with library.
+### Avoid
+- Reading `import.meta.env` outside `env.ts`.
+- Bypassing interceptors, or manually parsing the API envelope.
+- Embedding network logic directly in React components.
+- Introducing new global state libraries before validating React Query + Context suffices.
 
-## Testing & Future Considerations
-- (No test harness yet) — if adding tests, co-locate under `src/__tests__` or adopt a dedicated `tests/` folder; ensure service layer remains easily mockable via the centralized `api`.
+### Reference Examples
+Login flow: `pages/Login/index.tsx` (mutation + error parsing + auth context). Auth boundary: `components/auth/protected-route.tsx`. API pattern: `services/auth.ts` + `lib/api.ts`. UI variant pattern: `components/ui/button.tsx`. Sidebar composition: `components/app-sidebar.tsx`.
 
-## Things To Avoid
-- Duplicating API unwrap logic.
-- Directly reading `import.meta.env` outside `env.ts`.
-- Embedding fetch/axios calls inside React components—route via service functions.
-- Introducing new global state libs without assessing if React Query suffices.
+If something is unclear (e.g., adding query invalidation helpers, expanding sidebar navigation data strategy) leave a concise TODO in code and surface a note in PR.
 
-## When Unsure
-Reference existing patterns in: `pages/Login/index.tsx`, `services/auth.ts`, `components/ui/button.tsx`, `lib/api.ts`.
-
-(End) — Please review and indicate if any sections need deeper coverage (e.g., planned auth context, routing strategy, state management extensions).
+(End – request feedback: note any missing areas like test harness setup, future token refresh strategy, or i18n.)
