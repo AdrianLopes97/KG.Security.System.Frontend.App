@@ -1,7 +1,15 @@
+import logoCollapsed from "@/assets/menu-icon-2.png";
 import logo from "@/assets/menu-icon.png";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { Activity, EyeIcon, House, ShieldAlert } from "lucide-react";
 import * as React from "react";
 
@@ -38,8 +46,8 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <img src={logo} alt="KG SECSYSTEM" />
+      <SidebarHeader className="flex items-center justify-center py-4">
+        <LogoSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavProjects projects={data.projects} />
@@ -49,5 +57,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  );
+}
+
+function LogoSwitcher() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  return (
+    <div className="flex items-center justify-center">
+      {collapsed ? (
+        <img
+          src={logoCollapsed}
+          alt="KG SECSYSTEM compacto"
+          className="h-8 w-auto transition-all duration-200 ease-linear"
+        />
+      ) : (
+        <img src={logo} alt="KG SECSYSTEM" className="h-14 w-auto transition-all duration-200 ease-linear" />
+      )}
+    </div>
   );
 }
