@@ -67,3 +67,31 @@ export default tseslint.config([
   },
 ])
 ```
+
+---
+
+## Authentication & Route Protection
+
+A lightweight auth layer was added following the architecture guidelines (centralized service + context + Axios interceptor):
+
+### Files
+- `src/contexts/auth-context.tsx`: Manages `accessToken` state, persistence (localStorage), tab synchronization, and exposes `login`, `logout` + `isAuthenticated`.
+- `src/lib/api.ts`: Request interceptor attaches `Authorization: Bearer <token>` when a token exists.
+- `src/components/auth/protected-route.tsx`: Route guard components `ProtectedRoute` (requires auth) and `PublicOnlyRoute` (redirects if already authenticated).
+- `src/pages/Login/index.tsx`: Uses `useAuth()` to persist the token after successful login and navigate to `/home`.
+- `src/Routes.tsx`: Applies guards so `/home` and nested routes are protected; `/login` is inaccessible when authenticated.
+
+### Usage Pattern
+1. Perform login via service (`login(credentials)`), then call `auth.login(response)` with the returned `LoginResponse`.
+2. For logout (e.g., future UI button): `const { logout } = useAuth(); logout();` then navigate to `/login`.
+3. Any new protected routes should be nested inside the `<Route element={<ProtectedRoute />}>` block.
+4. To prevent logged-in users from seeing pages (login/register), wrap content with `<PublicOnlyRoute>`.
+
+### Extending
+- Add user profile decoding (e.g., from JWT) inside `login()` and store as new `user` field in context.
+- Implement refresh token logic by adding another request/response interceptor pair handling 401 responses.
+
+### Token Storage Notes
+Currently uses `localStorage` for simplicity; consider moving to an HTTP-only cookie or secure storage for production security requirements.
+
+---
