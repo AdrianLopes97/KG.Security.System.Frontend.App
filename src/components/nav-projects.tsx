@@ -1,5 +1,3 @@
-"use client";
-
 import { type LucideIcon } from "lucide-react";
 
 import {
@@ -8,20 +6,17 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 export function NavProjects({
   projects,
 }: {
-  projects: {
-    name: string;
-    url: string;
-    icon: LucideIcon;
+  readonly projects: readonly {
+    readonly name: string;
+    readonly url: string;
+    readonly icon: LucideIcon;
   }[];
 }) {
-  const { isMobile } = useSidebar();
-
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>

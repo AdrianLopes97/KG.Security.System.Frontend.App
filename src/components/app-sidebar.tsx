@@ -5,7 +5,6 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } fr
 import { Activity, EyeIcon, House, ShieldAlert } from "lucide-react";
 import * as React from "react";
 
-// This is sample data.
 const data = {
   user: {
     name: "shadcn",
