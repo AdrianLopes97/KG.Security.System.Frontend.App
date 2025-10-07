@@ -1,5 +1,5 @@
 import { WrapperPage } from "@/components/layout/wrapper-page";
-import { type ProjectRow, ProjectsTable } from "@/pages/Home/projects-table";
+import { type ProjectRow, ProjectsTable } from "@/components/tables/projects-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,7 @@ export function Home() {
       uptime: "99,3%",
       vulnerabilities: 3,
       lastScan: "20/01/2025, 07:30",
-      logs24h: "1.523",
+      logs24h: 1.523,
     },
     {
       id: "2",
@@ -70,7 +70,7 @@ export function Home() {
       uptime: "99,3%",
       vulnerabilities: 3,
       lastScan: "20/01/2025, 07:30",
-      logs24h: "1.523",
+      logs24h: 1.523,
     },
     ...Array.from({ length: 6 }).map((_, i) => ({
       id: String(i + 3),
@@ -80,7 +80,7 @@ export function Home() {
       uptime: "99,3%",
       vulnerabilities: 3,
       lastScan: "20/01/2025, 07:30",
-      logs24h: "1.523",
+      logs24h: 1.523,
     })),
   ];
 
