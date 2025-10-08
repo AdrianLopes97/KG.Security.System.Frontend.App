@@ -34,6 +34,20 @@ export interface DataTableProps<TData> {
   tableMeta?: TableOptions<TData>["meta"]; // pass-through meta for column cells
   isLoading?: boolean; // show skeleton rows
   loadingRows?: number; // how many skeleton rows (default 5)
+  /**
+   * Quando presente, ativa modo de paginação controlada pelo backend.
+   * A tabela assume que `data` já contém apenas os registros da página corrente.
+   * `pageIndex` é zero-based (0 = primeira página).
+   */
+  serverPagination?: {
+    pageIndex: number;
+    pageCount: number; // total de páginas informado pelo backend
+    totalCount?: number; // total geral de registros (opcional)
+    hasMore?: boolean; // se o backend expõe flag incremental
+    onPageChange: (pageIndex: number) => void; // callback para solicitar nova página
+    pageSize?: number; // page size efetivo retornado/usado pelo backend (opcional, sobrepõe prop pageSize)
+    isDisabled?: boolean; // desabilita controles (tipicamente enquanto faz fetch)
+  };
 }
 
 export function DataTable<TData>({
@@ -49,21 +63,31 @@ export function DataTable<TData>({
   tableMeta,
   isLoading = false,
   loadingRows = 5,
+  serverPagination,
 }: Readonly<DataTableProps<TData>>) {
+  // Modo client (default) usa paginação interna do TanStack.
+  // Modo server ignora getPaginationRowModel e considera que `data` já é a página atual.
   const table = useReactTable<TData>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(serverPagination
+      ? {}
+      : {
+          getPaginationRowModel: getPaginationRowModel(),
+          initialState: { pagination: { pageIndex: 0, pageSize } },
+        }),
     getRowId,
-    initialState: { pagination: { pageIndex: 0, pageSize } },
     meta: tableMeta,
   });
 
   const headerGroups = table.getHeaderGroups();
+  // Em server mode não aplicamos slicing adicional; usamos as linhas como vieram.
   const rows = table.getRowModel().rows;
-  const pageCount = table.getPageCount();
-  const current = table.getState().pagination.pageIndex;
+  const controlled = !!serverPagination;
+  const current = controlled ? serverPagination.pageIndex : table.getState().pagination.pageIndex;
+  const pageCount = controlled ? serverPagination.pageCount : table.getPageCount();
+  const paginationDisabled = isLoading || serverPagination?.isDisabled;
 
   function buildPageWindow(): number[] {
     const maxButtons = paginationWindow;
@@ -79,6 +103,15 @@ export function DataTable<TData>({
   }
 
   const pageWindow = buildPageWindow();
+
+  function prevDisabled() {
+    return controlled ? current === 0 : !table.getCanPreviousPage();
+  }
+  function nextDisabled() {
+    return controlled ? current === pageCount - 1 : !table.getCanNextPage();
+  }
+  const prevClass = prevDisabled() ? "pointer-events-none opacity-50" : undefined;
+  const nextClass = nextDisabled() ? "pointer-events-none opacity-50" : undefined;
 
   return (
     <div className={cn("rounded-xl border border-border/70 bg-background", className)}>
@@ -149,18 +182,27 @@ export function DataTable<TData>({
         </TableBody>
       </Table>
       <div className="px-4 py-4">
-        <Pagination className="justify-end" aria-disabled={isLoading} data-disabled={isLoading || undefined}>
+        <Pagination
+          className="justify-end"
+          aria-disabled={paginationDisabled}
+          data-disabled={paginationDisabled || undefined}
+        >
           <PaginationContent className="justify-end">
             <PaginationItem>
               <PaginationPrevious
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!isLoading) table.previousPage();
+                  if (paginationDisabled) return;
+                  if (controlled) {
+                    if (current > 0) serverPagination.onPageChange(current - 1);
+                  } else {
+                    table.previousPage();
+                  }
                 }}
-                aria-disabled={!table.getCanPreviousPage()}
-                data-disabled={!table.getCanPreviousPage() || undefined}
-                className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : undefined}
+                aria-disabled={prevDisabled()}
+                data-disabled={prevDisabled() || undefined}
+                className={prevClass}
               />
             </PaginationItem>
             {pageWindow[0] > 0 && (
@@ -170,7 +212,9 @@ export function DataTable<TData>({
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (!isLoading) table.setPageIndex(0);
+                      if (paginationDisabled) return;
+                      if (controlled) serverPagination.onPageChange(0);
+                      else table.setPageIndex(0);
                     }}
                     isActive={current === 0}
                   >
@@ -191,7 +235,9 @@ export function DataTable<TData>({
                   isActive={p === current}
                   onClick={(e) => {
                     e.preventDefault();
-                    if (!isLoading) table.setPageIndex(p);
+                    if (paginationDisabled) return;
+                    if (controlled) serverPagination.onPageChange(p);
+                    else table.setPageIndex(p);
                   }}
                 >
                   {p + 1}
@@ -211,7 +257,9 @@ export function DataTable<TData>({
                     isActive={current === pageCount - 1}
                     onClick={(e) => {
                       e.preventDefault();
-                      if (!isLoading) table.setPageIndex(pageCount - 1);
+                      if (paginationDisabled) return;
+                      if (controlled) serverPagination.onPageChange(pageCount - 1);
+                      else table.setPageIndex(pageCount - 1);
                     }}
                   >
                     {pageCount}
@@ -224,17 +272,25 @@ export function DataTable<TData>({
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!isLoading) table.nextPage();
+                  if (paginationDisabled) return;
+                  if (controlled) {
+                    if (current < pageCount - 1) serverPagination.onPageChange(current + 1);
+                  } else {
+                    table.nextPage();
+                  }
                 }}
-                aria-disabled={!table.getCanNextPage()}
-                data-disabled={!table.getCanNextPage() || undefined}
-                className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : undefined}
+                aria-disabled={nextDisabled()}
+                data-disabled={nextDisabled() || undefined}
+                className={nextClass}
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
         <div className="mt-2 text-right text-muted-foreground text-xs">
           Página {current + 1} de {pageCount || 1}
+          {serverPagination?.totalCount !== undefined && (
+            <span className="ml-1">• Total {serverPagination.totalCount} registro(s)</span>
+          )}
         </div>
       </div>
     </div>

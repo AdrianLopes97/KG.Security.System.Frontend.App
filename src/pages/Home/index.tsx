@@ -1,9 +1,11 @@
 import { WrapperPage } from "@/components/layout/wrapper-page";
-import { type ProjectRow, ProjectsTable } from "@/components/tables/projects-table";
+import { ProjectsTable } from "@/components/tables/projects-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { useProjectsTable } from "@/hooks/use-projects-table";
 import { Clock9, FileText, Globe, Plus, ShieldEllipsis } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 
 interface MetricCard {
   id: string;
@@ -14,75 +16,53 @@ interface MetricCard {
   variant: "brand" | "online" | "vuln" | "logs";
 }
 
-const metrics: MetricCard[] = [
-  {
-    id: "total-projects",
-    label: "Total Projetos",
-    value: 24,
-    description: "Projetos cadastrados",
-    icon: FileText,
-    variant: "brand",
-  },
-  {
-    id: "projects-online",
-    label: "Projetos Online",
-    value: 18,
-    description: "Monitoramento ativo",
-    icon: Globe,
-    variant: "online",
-  },
-  {
-    id: "total-vulns",
-    label: "Total Vulnerabilidades",
-    value: 132,
-    description: "Encontradas no período",
-    icon: ShieldEllipsis,
-    variant: "vuln",
-  },
-  {
-    id: "logs-24h",
-    label: "Logs (24h)",
-    value: 8_421,
-    description: "Eventos processados",
-    icon: Clock9,
-    variant: "logs",
-  },
-];
-
 export function Home() {
-  // Temporary mock data for table (replace with API integration later)
-  const projects: ProjectRow[] = [
-    {
-      id: "1",
-      name: "E-commerce Portal",
-      url: "https://ecommerce.example.com",
-      status: "online",
-      uptime: "99,3%",
-      vulnerabilities: 3,
-      lastScan: "20/01/2025, 07:30",
-      logs24h: 1.523,
-    },
-    {
-      id: "2",
-      name: "E-commerce Portal",
-      url: "https://ecommerce.example.com",
-      status: "offline",
-      uptime: "99,3%",
-      vulnerabilities: 3,
-      lastScan: "20/01/2025, 07:30",
-      logs24h: 1.523,
-    },
-    ...Array.from({ length: 6 }).map((_, i) => ({
-      id: String(i + 3),
-      name: "E-commerce Portal",
-      url: "https://ecommerce.example.com",
-      status: "online" as const,
-      uptime: "99,3%",
-      vulnerabilities: 3,
-      lastScan: "20/01/2025, 07:30",
-      logs24h: 1.523,
-    })),
-  ];
+  const [page, setPage] = useState(0);
+  const navigate = useNavigate();
+
+  const limit = 10;
+
+  const { data, isLoading, isFetching } = useProjectsTable(page + 1, limit); // se sua API usa 1-based
+
+  const metrics: MetricCard[] = useMemo(() => {
+    const totalProjects = data?.totalCount ?? data?.pagination.totalCount ?? 0;
+    const projectsOnline = data?.totalProjectsOnlineCount ?? 0;
+    const totalVulns = data?.vulnerabilityTotalCount ?? 0;
+    const logsTotal = data?.logsTotalCount ?? 0;
+
+    const format = (n: number) => new Intl.NumberFormat("pt-BR").format(n);
+
+    return [
+      {
+        id: "total-projects",
+        label: "Total Projetos",
+        value: format(totalProjects),
+        icon: FileText,
+        variant: "brand" as const,
+      },
+      {
+        id: "projects-online",
+        label: "Projetos Online",
+        value: format(projectsOnline),
+        icon: Globe,
+        variant: "online" as const,
+      },
+      {
+        id: "total-vulns",
+        label: "Total Vulnerabilidades",
+        value: format(totalVulns),
+        icon: ShieldEllipsis,
+        variant: "vuln" as const,
+      },
+      {
+        id: "logs-24h",
+        label: "Logs (total)",
+        value: format(logsTotal),
+        icon: Clock9,
+        variant: "logs" as const,
+      },
+    ];
+  }, [data]);
 
   return (
     <WrapperPage title="Home">
@@ -90,10 +70,10 @@ export function Home() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-semibold text-lg">Dashboard</h1>
-            <p className="text-muted-foreground text-sm">Gerencie seus projetos de monitoramento de segurança</p>
+            <p className="text-muted-foreground text-sm">Gerencie seus projetos</p>
           </div>
           <div>
-            <Button variant="brand" size="lg">
+            <Button variant="brand" size="lg" onClick={() => navigate("/create-project")}>
               <Plus className="mr-2" />
               Criar Novo Projeto
             </Button>
@@ -102,11 +82,9 @@ export function Home() {
         <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((m) => {
             const Icon = m.icon;
+            const isPending = isLoading && !data; // primeira carga
             return (
-              <Card
-                key={m.id}
-                className={cn("relative overflow-hidden border border-gray-200 text-black backdrop-blur-sm")}
-              >
+              <Card key={m.id} className="relative overflow-hidden border border-gray-200 text-black backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <CardTitle className="font-medium text-[16px] uppercase tracking-wide">{m.label}</CardTitle>
@@ -117,7 +95,9 @@ export function Home() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="font-semibold text-[48px] tabular-nums leading-tight">{m.value}</span>
+                    <span className="font-semibold text-[48px] tabular-nums leading-tight">
+                      {isPending ? "…" : m.value}
+                    </span>
                   </div>
                 </CardContent>
                 <div className="pointer-events-none absolute inset-0 opacity-40" />
@@ -125,7 +105,23 @@ export function Home() {
             );
           })}
         </div>
-        <ProjectsTable data={projects} pageSize={10} onEdit={(id) => console.log("edit", id)} />
+        <ProjectsTable
+          data={data?.projects ?? []}
+          isLoading={isLoading || isFetching}
+          serverPagination={
+            data
+              ? {
+                  pageIndex: page,
+                  pageCount: data.pagination.pageCount,
+                  totalCount: data.pagination.totalCount,
+                  hasMore: data.pagination.hasMore,
+                  onPageChange: setPage,
+                  isDisabled: isFetching,
+                }
+              : undefined
+          }
+          onEdit={(id) => console.log("edit", id)}
+        />
       </div>
     </WrapperPage>
   );

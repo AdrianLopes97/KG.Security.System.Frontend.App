@@ -1,6 +1,7 @@
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/auth/protected-route";
 import { Navigate, Route, Routes } from "react-router";
 import Sidebar from "./components/layout/sidebar-project";
+import { CreateProject } from "./pages/Create-Project";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
 
@@ -14,6 +15,7 @@ export function Router() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Sidebar />}>
           <Route path="/home" element={<Home />} />
+          <Route path="/create-project" element={<CreateProject />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/home" replace />} />
