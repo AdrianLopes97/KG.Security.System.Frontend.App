@@ -2,6 +2,7 @@ import { ProtectedRoute, PublicOnlyRoute } from "@/components/auth/protected-rou
 import { Navigate, Route, Routes } from "react-router";
 import Sidebar from "./components/layout/sidebar-project";
 import { CreateProject } from "./pages/Create-Project";
+import { EditProject } from "./pages/Edit-Project";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
 
@@ -16,6 +17,7 @@ export function Router() {
         <Route element={<Sidebar />}>
           <Route path="/home" element={<Home />} />
           <Route path="/create-project" element={<CreateProject />} />
+          <Route path="/projects/:id/edit" element={<EditProject />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/home" replace />} />

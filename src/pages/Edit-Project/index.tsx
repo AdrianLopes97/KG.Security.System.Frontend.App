@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { CreateProjectRequest } from "@/interfaces/projects/create-project.request";
-import { createProject } from "@/services/projects/create-project";
+import { useProjectById } from "@/hooks/use-project-by-id";
+import type { UpdateProjectRequest } from "@/interfaces/projects/update-project.request";
+import { updateProject } from "@/services/projects/update-project";
 import { parseApiError } from "@/utils/parse-api-error";
 import { useMutation } from "@tanstack/react-query";
-import { useId, useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useId, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 
-export function CreateProject() {
+export function EditProject() {
   const navigate = useNavigate();
+  const { id = "" } = useParams();
 
   const nameId = useId();
   const dastId = useId();
@@ -26,6 +28,7 @@ export function CreateProject() {
   const [heartbeatSeconds, setHeartbeatSeconds] = useState<string>("");
   const [timeoutSeconds, setTimeoutSeconds] = useState<string>("");
   const [slackWebhook, setSlackWebhook] = useState("");
+  const [monitoringId, setMonitoringId] = useState<string>("");
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [dastUrlError, setDastUrlError] = useState<string | null>(null);
@@ -65,13 +68,32 @@ export function CreateProject() {
     navigate(-1);
   }
 
+  const { data } = useProjectById(id);
+
+  useEffect(() => {
+    if (!data) return;
+    setName(data.name ?? "");
+    setGithubUrl(data.githubUrl ?? "");
+    setDastUrl(data.systemUrl ?? "");
+
+    if (data.monitoringRules) {
+      setHeartbeatSeconds(String(data.monitoringRules.checkIntervalSeconds ?? ""));
+      setTimeoutSeconds(String(data.monitoringRules.timeoutThresholdSeconds ?? ""));
+      setSlackWebhook(data.monitoringRules.slackWebhookUrl ?? "");
+      setMonitoringId(data.monitoringRules.id);
+    } else {
+      setHeartbeatSeconds("");
+      setTimeoutSeconds("");
+    }
+  }, [data]);
+
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: createProject,
+    mutationFn: (payload: UpdateProjectRequest) => updateProject(id, payload),
     onSuccess: () => {
       navigate("/home", { replace: true });
     },
     onError: (error) => {
-      alert(parseApiError(error, "Erro ao criar projeto"));
+      alert(parseApiError(error, "Erro ao atualizar projeto"));
     },
   });
 
@@ -95,7 +117,7 @@ export function CreateProject() {
     setHeartbeatSecondsError(null);
     setTimeoutSecondsError(null);
 
-    let monitoringRules: CreateProjectRequest["monitoringRules"] = null;
+    let monitoringRules: UpdateProjectRequest["monitoringRules"] = null;
     let monitoringIsValid = true;
 
     if (anyMonitoringFilled) {
@@ -116,6 +138,7 @@ export function CreateProject() {
 
       if (monitoringIsValid) {
         monitoringRules = {
+          id: monitoringId,
           checkIntervalSeconds: hb,
           timeoutThresholdSeconds: to,
           slackWebhookUrl: slack,
@@ -126,7 +149,7 @@ export function CreateProject() {
 
     if (!monitoringIsValid) return;
 
-    const payload: CreateProjectRequest = {
+    const payload: UpdateProjectRequest = {
       name: name.trim(),
       systemUrl: dastUrl.trim() || null,
       githubUrl: githubUrl.trim() || null,
@@ -137,12 +160,10 @@ export function CreateProject() {
   }
 
   return (
-    <WrapperPage title="Criar Projeto" breadcrumbs={[{ title: "Home", url: "/home" }]}>
+    <WrapperPage title="Editar Projeto" breadcrumbs={[{ title: "Home", url: "/home" }]}>
       <div>
-        <h1 className="font-semibold text-[30px] text-lg">Criar Novo Projeto</h1>
-        <p className="text-[16px] text-muted-foreground text-sm">
-          Configure um novo projeto preenchendo as informações abaixo
-        </p>
+        <h1 className="font-semibold text-[30px] text-lg">Editar Projeto</h1>
+        <p className="text-[16px] text-muted-foreground text-sm">Atualize as informações do projeto</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
@@ -150,9 +171,7 @@ export function CreateProject() {
           <CardHeader className="pb-2">
             <div className="flex flex-col">
               <CardTitle className="font-semibold text-[20px] text-black">Informações Básicas</CardTitle>
-              <p className="text-[16px] text-muted-foreground text-sm">
-                Dados fundamentais do projeto para identificação e análise
-              </p>
+              <p className="text-[16px] text-muted-foreground text-sm">Dados fundamentais do projeto</p>
             </div>
           </CardHeader>
           <CardContent>
@@ -279,13 +298,12 @@ export function CreateProject() {
           </CardContent>
         </Card>
 
-        {/* Ações */}
         <div className="flex items-center justify-end gap-3 pt-2">
           <Button type="button" variant="brand" className="opacity-50" onClick={handleCancel}>
             Cancelar
           </Button>
           <Button variant="brand" type="submit" disabled={isPending}>
-            {isPending ? "Criando..." : "Criar Projeto"}
+            {isPending ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </div>
       </form>

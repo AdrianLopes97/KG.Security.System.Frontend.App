@@ -1,4 +1,5 @@
-export interface CreateMonitoringRulesPartialRequest {
+export interface UpdateMonitoringRulesPartialRequest {
+  id: string;
   checkIntervalSeconds: number;
   timeoutThresholdSeconds: number;
   isActive: boolean;

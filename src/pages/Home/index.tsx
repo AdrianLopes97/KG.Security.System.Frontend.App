@@ -120,7 +120,7 @@ export function Home() {
                 }
               : undefined
           }
-          onEdit={(id) => console.log("edit", id)}
+          onEdit={(id) => navigate(`/projects/${id}/edit`)}
         />
       </div>
     </WrapperPage>
