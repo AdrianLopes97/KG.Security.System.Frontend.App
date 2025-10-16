@@ -48,6 +48,7 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
   {
     accessorKey: "vulnerability",
     header: () => <span className="font-medium text-xs uppercase tracking-wide">Vulnerabilidade</span>,
+    size: 560,
     cell: ({ row }) => {
       const value = row.original;
 
@@ -60,12 +61,14 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
 
       return (
         <div className="flex items-start gap-2">
-          <CircleAlert className={`mt-0.5 size-4 ${iconColor}`} />
+          <CircleAlert className={`mt-0.5 size-4 ${iconColor} shrink-0`} />
           <div className="flex flex-col">
-            <span className="font-medium text-sm leading-tight">{value.ruleId}</span>
-            <span className="text-muted-foreground text-xs leading-tight">
-              {value.description ? value.description : "-"}
-            </span>
+            <div className="flex min-w-0 flex-col">
+              <span className="whitespace-normal break-all font-medium text-sm leading-tight">{value.ruleId}</span>
+              <span className="whitespace-normal break-words text-muted-foreground text-xs leading-snug">
+                {value.description ? value.description : "-"}
+              </span>
+            </div>
           </div>
         </div>
       );
@@ -152,6 +155,7 @@ export function VulnerabilitiesTable({
       description="Lista de todas as vulnerabilidades"
       renderEmpty={<span>Nenhuma vulnerabilidade encontrada.</span>}
       tableMeta={{ onEdit }}
+      tableClassName="min-w-[1040px]"
     />
   );
 }

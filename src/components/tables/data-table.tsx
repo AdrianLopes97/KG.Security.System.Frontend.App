@@ -48,6 +48,11 @@ export interface DataTableProps<TData> {
     pageSize?: number; // page size efetivo retornado/usado pelo backend (opcional, sobrepõe prop pageSize)
     isDisabled?: boolean; // desabilita controles (tipicamente enquanto faz fetch)
   };
+
+  /** Classe extra para o wrapper de scroll horizontal (opcional) */
+  tableWrapperClassName?: string;
+  /** Classe extra para a <Table/> (opcional). Ex.: "min-w-[1120px]" */
+  tableClassName?: string;
 }
 
 export function DataTable<TData>({
@@ -64,6 +69,8 @@ export function DataTable<TData>({
   isLoading = false,
   loadingRows = 5,
   serverPagination,
+  tableWrapperClassName,
+  tableClassName,
 }: Readonly<DataTableProps<TData>>) {
   // Modo client (default) usa paginação interna do TanStack.
   // Modo server ignora getPaginationRowModel e considera que `data` já é a página atual.
@@ -122,65 +129,67 @@ export function DataTable<TData>({
         </div>
       )}
       <Separator className="my-0" />
-      <Table>
-        <TableHeader className="bg-muted/40">
-          {headerGroups.map((hg) => (
-            <TableRow key={hg.id} className="border-border/60 border-b hover:bg-transparent">
-              {hg.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  style={{ width: header.getSize() ? header.getSize() : undefined }}
-                  className="px-4 py-3 font-medium text-[11px] text-black"
-                >
-                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {isLoading
-            ? Array.from({ length: loadingRows }).map((_, i) => {
-                const rowKey = `skeleton-row-${i}`;
-                return (
-                  <TableRow key={rowKey} data-loading-row className="border-border/50 border-b text-sm">
-                    {columns.map((col, ci) => {
-                      const colKey =
-                        (typeof col.id === "string" && col.id) ||
-                        (typeof col.header === "string" && col.header) ||
-                        `col-${ci}`;
-                      return (
-                        <TableCell key={`${rowKey}-${colKey}`} className="px-4 py-3">
-                          <Skeleton className="h-4 w-full max-w-[160px]" />
-                        </TableCell>
-                      );
-                    })}
+      <div className={cn("w-full overflow-x-auto", tableWrapperClassName)}>
+        <Table className={cn("w-full min-w-[960px] table-fixed", tableClassName)}>
+          <TableHeader className="bg-muted/40">
+            {headerGroups.map((hg) => (
+              <TableRow key={hg.id} className="border-border/60 border-b hover:bg-transparent">
+                {hg.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    style={{ width: header.getSize() ? header.getSize() : undefined }}
+                    className="px-4 py-3 font-medium text-[11px] text-black"
+                  >
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading
+              ? Array.from({ length: loadingRows }).map((_, i) => {
+                  const rowKey = `skeleton-row-${i}`;
+                  return (
+                    <TableRow key={rowKey} data-loading-row className="border-border/50 border-b text-sm">
+                      {columns.map((col, ci) => {
+                        const colKey =
+                          (typeof col.id === "string" && col.id) ||
+                          (typeof col.header === "string" && col.header) ||
+                          `col-${ci}`;
+                        return (
+                          <TableCell key={`${rowKey}-${colKey}`} className="px-4 py-3">
+                            <Skeleton className="h-4 w-full max-w-[160px]" />
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })
+              : rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className={cn("border-border/50 border-b text-sm", row.getIsSelected() && "bg-muted")}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4 py-3">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                );
-              })
-            : rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className={cn("border-border/50 border-b text-sm", row.getIsSelected() && "bg-muted")}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-4 py-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-          {!isLoading && rows.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                {typeof renderEmpty === "function"
-                  ? renderEmpty({ columns: columns.length })
-                  : renderEmpty || "Nenhum registro encontrado."}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+                ))}
+            {!isLoading && rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground text-sm">
+                  {typeof renderEmpty === "function"
+                    ? renderEmpty({ columns: columns.length })
+                    : renderEmpty || "Nenhum registro encontrado."}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
       <div className="px-4 py-4">
         <Pagination
           className="justify-end"
