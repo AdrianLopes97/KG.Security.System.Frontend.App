@@ -2,6 +2,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { BrowserRouter } from "react-router";
+import { Toaster } from "./components/ui/sonner";
 import { queryClient } from "./lib/tanstack-query";
 
 interface ProvidersProps {
@@ -13,6 +14,7 @@ export function Providers(props: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>{props.children}</BrowserRouter>
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
