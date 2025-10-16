@@ -73,7 +73,7 @@ export function Home() {
             <p className="text-muted-foreground text-sm">Gerencie seus projetos</p>
           </div>
           <div>
-            <Button variant="brand" size="lg" onClick={() => navigate("/create-project")}>
+            <Button variant="brand" size="lg" onClick={() => navigate("/home/create-project")}>
               <Plus className="mr-2" />
               Criar Novo Projeto
             </Button>
@@ -86,10 +86,10 @@ export function Home() {
             return (
               <Card key={m.id} className="relative overflow-hidden border border-gray-200 text-black backdrop-blur-sm">
                 <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="font-medium text-[16px] uppercase tracking-wide">{m.label}</CardTitle>
-                    <span className="rounded-md bg-background/60 p-1.5 shadow-sm ring-1 ring-border ring-inset">
-                      <Icon className="size-4 text-brand" />
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-medium text-[16px] tracking-wide">{m.label}</CardTitle>
+                    <span className="bg-background/60 p-1.5">
+                      <Icon className="size-[24px] text-brand" />
                     </span>
                   </div>
                 </CardHeader>
@@ -120,7 +120,7 @@ export function Home() {
                 }
               : undefined
           }
-          onEdit={(id) => navigate(`/projects/${id}/edit`)}
+          onEdit={(id) => navigate(`/home/projects/${id}/edit`)}
         />
       </div>
     </WrapperPage>

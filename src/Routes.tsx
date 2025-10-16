@@ -5,6 +5,7 @@ import { CreateProject } from "./pages/Create-Project";
 import { EditProject } from "./pages/Edit-Project";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
+import { Vulnerability } from "./pages/Vulnerability";
 
 export function Router() {
   return (
@@ -16,8 +17,9 @@ export function Router() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Sidebar />}>
           <Route path="/home" element={<Home />} />
-          <Route path="/create-project" element={<CreateProject />} />
-          <Route path="/projects/:id/edit" element={<EditProject />} />
+          <Route path="/home/create-project" element={<CreateProject />} />
+          <Route path="/home/projects/:id/edit" element={<EditProject />} />
+          <Route path="/vulnerabilities" element={<Vulnerability />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/home" replace />} />
