@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { VulnerabilitySeverity } from "@/types/enums/vulnerabilities.enums";
 import { type ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
+import { CircleAlert } from "lucide-react";
 
 interface VulnerabilitiesTableProps {
   readonly data: GetVulnerabilitiesResponse[];
@@ -21,13 +22,26 @@ interface VulnerabilitiesTableProps {
     totalCount?: number;
     hasMore?: boolean;
     onPageChange: (pageIndex: number) => void;
-    isDisabled?: boolean; // desabilita controles
+    isDisabled?: boolean;
   };
-  readonly isLoading?: boolean; // estado de carregamento externo
+  readonly isLoading?: boolean;
 }
 
 interface TableMeta {
   onEdit?: (id: string) => void;
+}
+
+const severityStyles: Record<string, { label: string; className: string }> = {
+  error: { label: "Erro", className: "bg-red-600 text-white hover:bg-red-600" },
+  warning: { label: "Alerta", className: "bg-orange-500 text-white hover:bg-orange-600" },
+  note: { label: "Anotação", className: "bg-neutral-500 text-white hover:bg-neutral-600" },
+};
+
+function getSeverityStyle(sev?: VulnerabilitySeverity) {
+  const key = String(sev ?? "").toLowerCase();
+  return (
+    severityStyles[key] ?? { label: String(sev ?? "-"), className: "border-border/70 bg-muted/40 text-foreground" }
+  );
 }
 
 const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
@@ -36,92 +50,87 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
     header: () => <span className="font-medium text-xs uppercase tracking-wide">Vulnerabilidade</span>,
     cell: ({ row }) => {
       const value = row.original;
+
+      let iconColor = "text-neutral-500";
+      if (value.severity === VulnerabilitySeverity.ERROR) {
+        iconColor = "text-red-500";
+      } else if (value.severity === VulnerabilitySeverity.WARNING) {
+        iconColor = "text-amber-500";
+      }
+
       return (
-        <div className="flex flex-col">
-          <span className="font-medium text-sm leading-tight">{value.ruleId}</span>
-          <span className="text-muted-foreground text-xs leading-tight">
-            {value.description ? value.description : "-"}
-          </span>
+        <div className="flex items-start gap-2">
+          <CircleAlert className={`mt-0.5 size-4 ${iconColor}`} />
+          <div className="flex flex-col">
+            <span className="font-medium text-sm leading-tight">{value.ruleId}</span>
+            <span className="text-muted-foreground text-xs leading-tight">
+              {value.description ? value.description : "-"}
+            </span>
+          </div>
         </div>
       );
     },
   },
   {
-    accessorKey: "criticality",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Criticidade</span>,
+    accessorKey: "level",
+    header: () => <span className="font-medium text-xs uppercase tracking-wide">Nivel</span>,
     cell: ({ row }) => {
-      const value = row.original;
-      const status = value.severity;
+      const v = row.original;
+      const s = getSeverityStyle(v.severity);
 
       return (
-        <Badge
-          variant={status === VulnerabilitySeverity.ERROR ? "secondary" : "outline"}
-          className={cn(
-            "px-2 py-0.5",
-            status === VulnerabilitySeverity.ERROR
-              ? "bg-green-500/90 text-white hover:bg-green-600"
-              : "border-border/70 bg-zinc-500 text-white hover:bg-zinc-600"
-          )}
-        >
-          {status === VulnerabilitySeverity.ERROR ? "Online" : "Offline"}
+        <Badge variant="secondary" className={cn("rounded-full px-2 py-0.5 text-xs", s.className)}>
+          {s.label}
         </Badge>
       );
     },
-    size: 110,
+    size: 120,
   },
   {
     accessorKey: "foundedAt",
     header: () => <span className="font-medium text-xs uppercase tracking-wide">Encontrada em</span>,
     cell: ({ row }) => {
-      const value = row.original;
-
+      const v = row.original;
       return (
         <span className="whitespace-nowrap text-sm">
-          {value.createdAt ? dayjs(value.createdAt).format("DD/MM/YYYY HH:mm") : "-"}
+          {v.createdAt ? dayjs(v.createdAt).format("DD/MM/YYYY, HH:mm") : "-"}
         </span>
       );
     },
-    size: 160,
+    size: 170,
   },
   {
     accessorKey: "isRecurrent",
     header: () => <span className="font-medium text-xs uppercase tracking-wide">Recorrente</span>,
     cell: ({ row }) => {
-      const value = row.original;
-      const has = value.isRecurrent;
+      const v = row.original;
+      const has = v.isRecurrent;
       return (
         <Badge
-          variant="outline"
+          variant="secondary"
           className={cn(
-            "h-6 min-w-6 justify-center tabular-nums",
-            has ? "border-border bg-background" : "border-border/60 bg-muted/40 text-muted-foreground"
+            "rounded-full px-2 py-0.5 text-xs",
+            has ? "bg-red-600 text-white hover:bg-red-600" : "bg-muted/40 text-foreground/60"
           )}
         >
           {has ? "Sim" : "Não"}
         </Badge>
       );
     },
-    size: 140,
+    size: 120,
   },
   {
     accessorKey: "foundInScans",
     header: () => <span className="font-medium text-xs uppercase tracking-wide">Scans</span>,
     cell: ({ row }) => {
-      const value = row.original;
-      const has = value.foundInScans > 0;
+      const v = row.original;
       return (
-        <Badge
-          variant="outline"
-          className={cn(
-            "h-6 min-w-6 justify-center tabular-nums",
-            has ? "border-border bg-background" : "border-border/60 bg-muted/40 text-muted-foreground"
-          )}
-        >
-          {value.foundInScans}x
+        <Badge variant="outline" className="rounded-full border-border/70 bg-background px-2 py-0.5 text-xs">
+          {v.foundInScans}x
         </Badge>
       );
     },
-    size: 140,
+    size: 110,
   },
 ];
 
