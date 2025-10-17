@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useObservabilityTable } from "@/hooks/use-observabilities-table";
 import { useProjectsList } from "@/hooks/use-projects-list";
 import { FilterPeriods } from "@/types/enums/filter-periods.enum";
-import { useQueryClient } from "@tanstack/react-query";
 import { Calendar, CircleX, Info, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -26,7 +25,6 @@ export function Observability() {
   const [period, setPeriod] = useState<FilterPeriods>(FilterPeriods.allDays);
   const limit = 10;
 
-  const queryClient = useQueryClient();
   const { data: projects = [], isLoading: isLoadingProjects } = useProjectsList();
 
   useEffect(() => {
@@ -97,7 +95,7 @@ export function Observability() {
           <CardContent>
             <div data-slot="setup-callout-cta">
               <Button variant="outline" size="sm" asChild>
-                <Link to="/docs/observability-setup">Ver Guia de Setup</Link>
+                <Link to={`/observability/${selectedProjectId}/setup-observability`}>Ver Guia de Setup</Link>
               </Button>
             </div>
           </CardContent>
