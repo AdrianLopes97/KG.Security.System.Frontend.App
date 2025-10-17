@@ -47,7 +47,7 @@ function getSeverityStyle(sev?: VulnerabilitySeverity) {
 const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
   {
     accessorKey: "vulnerability",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Vulnerabilidade</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Vulnerabilidade</span>,
     size: 560,
     cell: ({ row }) => {
       const value = row.original;
@@ -76,7 +76,7 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
   },
   {
     accessorKey: "level",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Nivel</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Nivel</span>,
     cell: ({ row }) => {
       const v = row.original;
       const s = getSeverityStyle(v.severity);
@@ -91,7 +91,7 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
   },
   {
     accessorKey: "foundedAt",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Encontrada em</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Encontrada em</span>,
     cell: ({ row }) => {
       const v = row.original;
       return (
@@ -104,7 +104,7 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
   },
   {
     accessorKey: "isRecurrent",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Recorrente</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Recorrente</span>,
     cell: ({ row }) => {
       const v = row.original;
       const has = v.isRecurrent;
@@ -124,7 +124,7 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
   },
   {
     accessorKey: "foundInScans",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Scans</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Scans</span>,
     cell: ({ row }) => {
       const v = row.original;
       return (

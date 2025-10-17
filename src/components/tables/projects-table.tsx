@@ -35,7 +35,7 @@ interface TableMeta {
 const columns: ColumnDef<GetProjectsResponse>[] = [
   {
     accessorKey: "name",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Projeto</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Projeto</span>,
     cell: ({ row }) => {
       const value = row.original;
       return (
@@ -48,7 +48,7 @@ const columns: ColumnDef<GetProjectsResponse>[] = [
   },
   {
     accessorKey: "status",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Status</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Status</span>,
     cell: ({ row }) => {
       const value = row.original;
       const status = value.upTimeStatus;
@@ -71,7 +71,7 @@ const columns: ColumnDef<GetProjectsResponse>[] = [
   },
   {
     accessorKey: "uptime",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Uptime</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Uptime</span>,
     cell: ({ row }) => {
       const value = row.original;
       return <span className="text-sm tabular-nums">{value.uptimePercentage ? value.uptimePercentage : "-"}</span>;
@@ -80,7 +80,7 @@ const columns: ColumnDef<GetProjectsResponse>[] = [
   },
   {
     accessorKey: "vulnerabilities",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Vulnerabilidades</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Vulnerabilidades</span>,
     cell: ({ row }) => {
       const value = row.original;
       const has = value.totalVulnerabilities > 0;
@@ -100,7 +100,7 @@ const columns: ColumnDef<GetProjectsResponse>[] = [
   },
   {
     accessorKey: "lastScan",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Último Scan</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Último Scan</span>,
     cell: ({ row }) => {
       const value = row.original;
 
@@ -114,7 +114,7 @@ const columns: ColumnDef<GetProjectsResponse>[] = [
   },
   {
     accessorKey: "logs24h",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Logs (24h)</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Logs (24h)</span>,
     cell: ({ row }) => {
       const value = row.original;
       return <span className="text-sm tabular-nums">{value.logsCount}</span>;
@@ -123,7 +123,7 @@ const columns: ColumnDef<GetProjectsResponse>[] = [
   },
   {
     id: "actions",
-    header: () => <span className="font-medium text-xs uppercase tracking-wide">Ações</span>,
+    header: () => <span className="font-medium text-xs tracking-wide">Ações</span>,
     cell: ({ row, table }) => {
       const value = row.original;
       const meta = table.options.meta as TableMeta | undefined;
