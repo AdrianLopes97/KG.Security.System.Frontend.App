@@ -5,7 +5,9 @@ import { CreateProject } from "./pages/Create-Project";
 import { EditProject } from "./pages/Edit-Project";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
+import { Monitoring } from "./pages/Monitoring";
 import { Observability } from "./pages/Observability";
+import { SetupMonitoring } from "./pages/Setup-Monitoring";
 import { SetupObservability } from "./pages/Setup-Observability";
 import { Vulnerability } from "./pages/Vulnerability";
 
@@ -24,6 +26,8 @@ export function Router() {
           <Route path="/vulnerabilities" element={<Vulnerability />} />
           <Route path="/observability" element={<Observability />} />
           <Route path="/observability/:projectId/setup-observability" element={<SetupObservability />} />
+          <Route path="/monitoring" element={<Monitoring />} />
+          <Route path="/monitoring/:projectId/setup-monitoring" element={<SetupMonitoring />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/home" replace />} />
