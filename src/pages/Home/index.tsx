@@ -1,8 +1,13 @@
 import { WrapperPage } from "@/components/layout/wrapper-page";
 import { ProjectsTable } from "@/components/tables/projects-table";
+import { toast } from "@/components/toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProjectsTable } from "@/hooks/use-projects-table";
+import { queryClient } from "@/lib/tanstack-query";
+import { deleteProject } from "@/services/projects/delete-project";
+import { parseApiError } from "@/utils/parse-api-error";
+import { useMutation } from "@tanstack/react-query";
 import { Clock9, FileText, Globe, Plus, ShieldEllipsis } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -23,6 +28,18 @@ export function Home() {
   const limit = 10;
 
   const { data, isLoading, isFetching } = useProjectsTable(page + 1, limit); // se sua API usa 1-based
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteProject(id),
+    onSuccess: () => {
+      toast({ title: "Projeto excluído com sucesso" });
+      // Invalida todas as páginas da lista
+      queryClient.invalidateQueries({ queryKey: ["get-projects"] });
+    },
+    onError: (error) => {
+      toast({ title: parseApiError(error, "Falha ao excluir projeto"), variant: "destructive" });
+    },
+  });
 
   const metrics: MetricCard[] = useMemo(() => {
     const totalProjects = data?.totalCount ?? data?.pagination.totalCount ?? 0;
@@ -121,6 +138,9 @@ export function Home() {
               : undefined
           }
           onEdit={(id) => navigate(`/home/projects/${id}/edit`)}
+          onDelete={async (id) => {
+            await deleteMutation.mutateAsync(id);
+          }}
         />
       </div>
     </WrapperPage>

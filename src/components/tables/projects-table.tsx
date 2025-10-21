@@ -1,18 +1,30 @@
 import { DataTable } from "@/components/tables/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GetProjectsResponse } from "@/interfaces/projects/get-projects.response";
 import { cn } from "@/lib/utils";
 import { UpTimeStatus } from "@/types/enums/up-time-status.enum";
 import { type ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface ProjectsTableProps {
   readonly data: GetProjectsResponse[];
   /** Page size usado apenas em modo client (quando não há serverPagination) */
   readonly pageSize?: number;
   readonly onEdit?: (id: string) => void;
+  readonly onDelete?: (id: string) => void | Promise<void>;
   /**
    * Ativa paginação controlada vinda do backend. `data` deve conter apenas os registros da página corrente.
    * pageIndex é zero-based.
@@ -30,6 +42,7 @@ interface ProjectsTableProps {
 
 interface TableMeta {
   onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
 }
 
 const columns: ColumnDef<GetProjectsResponse>[] = [
@@ -128,23 +141,73 @@ const columns: ColumnDef<GetProjectsResponse>[] = [
       const value = row.original;
       const meta = table.options.meta as TableMeta | undefined;
       const onEdit = meta?.onEdit;
+      const onDelete = meta?.onDelete;
       return (
-        <Button
-          type="button"
-          onClick={() => onEdit?.(value.id)}
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1 px-2 font-medium text-primary text-xs hover:underline"
-        >
-          Editar <Pencil aria-hidden className="size-3.5" />
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                onClick={() => onEdit?.(value.id)}
+                variant="ghost"
+                size="sm"
+                aria-label="Editar projeto"
+              >
+                <Pencil aria-hidden className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Editar</TooltipContent>
+          </Tooltip>
+          <Dialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DialogTrigger asChild>
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Excluir projeto">
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                </DialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Excluir</TooltipContent>
+            </Tooltip>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirmar exclusão</DialogTitle>
+                <DialogDescription>
+                  Tem certeza que deseja excluir o projeto "{value.name}"? Esta ação não pode ser desfeita.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancelar</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      await onDelete?.(value.id);
+                    }}
+                  >
+                    Excluir
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       );
     },
     size: 90,
   },
 ];
 
-export function ProjectsTable({ data, pageSize = 10, onEdit, serverPagination, isLoading }: ProjectsTableProps) {
+export function ProjectsTable({
+  data,
+  pageSize = 10,
+  onEdit,
+  onDelete,
+  serverPagination,
+  isLoading,
+}: ProjectsTableProps) {
   return (
     <DataTable
       data={data}
@@ -155,7 +218,7 @@ export function ProjectsTable({ data, pageSize = 10, onEdit, serverPagination, i
       title="Projetos"
       description="Lista de todos os projetos"
       renderEmpty={<span>Nenhum projeto encontrado.</span>}
-      tableMeta={{ onEdit }}
+      tableMeta={{ onEdit, onDelete }}
     />
   );
 }
