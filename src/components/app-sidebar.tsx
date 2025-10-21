@@ -10,6 +10,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useMe } from "@/hooks/use-me";
 import { Activity, EyeIcon, House, ShieldAlert } from "lucide-react";
 import * as React from "react";
 
@@ -44,6 +45,15 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: me } = useMe();
+  const user = React.useMemo(
+    () => ({
+      name: me ? `${me.firstName ?? ""} ${me.lastName ?? ""}`.trim() || me.email : "Usuário",
+      email: me?.email ?? "",
+      avatar: "",
+    }),
+    [me]
+  );
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex items-center justify-center py-4">
@@ -53,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
