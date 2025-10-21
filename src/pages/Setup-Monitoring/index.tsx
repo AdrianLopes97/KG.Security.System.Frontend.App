@@ -61,7 +61,7 @@ export function SetupMonitoring() {
   }
 
   const projectKey = data;
-  const endpoint = `${env.VITE_BASE_API_URL}/webhooks/observability`;
+  const endpoint = `${env.VITE_BASE_API_URL}/webhooks/monitoring`;
 
   const curlSample = `
 curl --location '${endpoint}' \\
@@ -69,51 +69,33 @@ curl --location '${endpoint}' \\
 --data '{
   "projectId": "${projectId}",
   "projectKey": "${projectKey}",
-  "level": "info",
-  "Message": "Esta é uma mensagem de exemplo",
-  "Name": "Observabilidade Exemplo",
-  "Origin": "main.cpp",
-  "Stack": {},
-  "Stringified": {},
-  "info": {
-    "key": "value"
-  }
+  "heartBeatStatus": "OK"
 }'`.trim();
 
   const tsSample = `import axios from "axios";
 
-interface ObservabilityPayload {
+type HeartbeatStatus = "OK" | "WARN" | "ERROR";
+
+interface MonitoringPayload {
   projectId: string;
   projectKey: string;
-  level: "info" | "warning" | "error";
-  Message: string;
-  Name?: string;
-  Origin?: string;
-  Stack?: Record<string, unknown>;
-  Stringified?: Record<string, unknown>;
-  info?: Record<string, unknown>;
+  heartBeatStatus: HeartbeatStatus;
 }
 
-async function sendObservabilityLog() {
-  const payload: ObservabilityPayload = {
+async function sendHeartbeat() {
+  const payload: MonitoringPayload = {
     projectId: "${projectId}",
     projectKey: "${projectKey}",
-    level: "info",
-    Message: "Esta é uma mensagem de exemplo",
-    Name: "Observabilidade Exemplo",
-    Origin: "main.cpp",
-    Stack: {},
-    Stringified: {},
-    info: { key: "value" }
+    heartBeatStatus: "OK",
   };
 
   await axios.post("${endpoint}", payload, {
     headers: { "Content-Type": "application/json" },
-    timeout: 10_000
+    timeout: 10_000,
   });
 }
 
-sendObservabilityLog().catch(console.error);`.trim();
+sendHeartbeat().catch(console.error);`.trim();
 
   return (
     <WrapperPage title="Guia de integração" breadcrumbs={[{ title: "Monitoramento", url: "/monitoring" }]}>
@@ -121,7 +103,9 @@ sendObservabilityLog().catch(console.error);`.trim();
         <Card>
           <CardHeader>
             <CardTitle>Guia de Integração – Monitoramento</CardTitle>
-            <CardDescription>Siga as instruções abaixo para enviar logs para o webhook do projeto.</CardDescription>
+            <CardDescription>
+              Siga as instruções abaixo para enviar heartbeats para o webhook do projeto.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
@@ -132,7 +116,8 @@ sendObservabilityLog().catch(console.error);`.trim();
             <Separator />
             <Section title="1) Monte o payload">
               <p className="text-muted-foreground text-sm">
-                Campos mínimos: projectId, projectKey, level e Message. Níveis aceitos: info, warning, error.
+                Campos mínimos: <b>projectId</b>, <b>projectKey</b> e <b>heartBeatStatus</b>. Valores aceitos para{" "}
+                <b>heartBeatStatus</b>: <code>OK</code>, <code>WARN</code>, <code>ERROR</code>.
               </p>
             </Section>
             <Section title="2) Envie via cURL">
@@ -151,7 +136,7 @@ sendObservabilityLog().catch(console.error);`.trim();
             </Section>
             <Section title="4) Verifique na UI">
               <p className="text-muted-foreground text-sm">
-                Após o envio, os registros aparecerão na tabela de Monitoramento do projeto selecionado.
+                Após o envio, o status do sistema e contadores serão atualizados na página de Monitoramento do projeto.
               </p>
             </Section>
           </CardContent>
