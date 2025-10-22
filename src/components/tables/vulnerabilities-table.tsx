@@ -1,11 +1,12 @@
+import { type ColumnDef } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import { CircleAlert } from "lucide-react";
 import { DataTable } from "@/components/tables/data-table";
 import { Badge } from "@/components/ui/badge";
 import type { GetVulnerabilitiesResponse } from "@/interfaces/vulnerabilities/get-vulnerabilities.response";
 import { cn } from "@/lib/utils";
+import { ScanType } from "@/types/enums/scan-type.enums";
 import { VulnerabilitySeverity } from "@/types/enums/vulnerabilities.enums";
-import { type ColumnDef } from "@tanstack/react-table";
-import dayjs from "dayjs";
-import { CircleAlert } from "lucide-react";
 
 interface VulnerabilitiesTableProps {
   readonly data: GetVulnerabilitiesResponse[];
@@ -85,6 +86,21 @@ const columns: ColumnDef<GetVulnerabilitiesResponse>[] = [
         <Badge variant="secondary" className={cn("rounded-full px-2 py-0.5 text-xs", s.className)}>
           {s.label}
         </Badge>
+      );
+    },
+    size: 120,
+  },
+  {
+    accessorKey: "scanType",
+    header: () => <span className="font-medium text-xs tracking-wide">Tipo de Scan</span>,
+    cell: ({ row }) => {
+      const v = row.original;
+      const s = v.scanType == ScanType.DYNAMIC ? "Dinâmico" : "Estático";
+
+      return (
+        <span className="whitespace-nowrap text-sm">
+          {s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "-"}
+        </span>
       );
     },
     size: 120,
